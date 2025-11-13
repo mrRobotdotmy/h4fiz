@@ -1,0 +1,718 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>root@h4fiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Fira+Code:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#050507; --panel:#0b0b12; --accent:#00ff9f; --accent2:#7c4dff; --muted:#7b7b86;
+    --glass: rgba(255,255,255,0.03);
+    --neon-shadow: 0 0 8px var(--accent), 0 0 20px rgba(0,255,159,0.12);
+    --neon-shadow-2: 0 0 6px var(--accent2), 0 0 18px rgba(124,77,255,0.12);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:"Fira Code",monospace;background: radial-gradient(1200px 600px at 10% 10%, rgba(124,77,255,0.06), transparent), radial-gradient(1000px 500px at 90% 90%, rgba(0,255,159,0.03), transparent), var(--bg); color:#cfeee4; -webkit-font-smoothing:antialiased;}
+  /* matrix canvas container */
+  .matrix{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.06}
+  .container{position:relative;z-index:2;max-width:1100px;margin:28px auto;padding:20px;border-radius:12px;background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));box-shadow:0 10px 50px rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.03);min-height:78vh}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+  .logo{display:flex;gap:12px;align-items:center}
+  .symbol{width:52px;height:52px;border-radius:8px;display:grid;place-items:center;background:linear-gradient(135deg,var(--panel),rgba(255,255,255,0.02));box-shadow:var(--neon-shadow-2);font-family:"Orbitron",monospace;color:var(--accent2);font-size:20px;border:1px solid rgba(124,77,255,0.12)}
+  .logo h1{margin:0;font-family:"Orbitron";color:var(--accent);text-shadow:var(--neon-shadow);font-size:20px}
+  .logo p{margin:0;font-size:12px;color:var(--muted)}
+  nav{display:flex;gap:8px;flex-wrap:wrap}
+  .nav-btn{background:transparent;color:var(--muted);border:1px solid transparent;padding:8px 10px;border-radius:8px;cursor:pointer;transition:all .12s}
+  .nav-btn:hover{color:var(--accent);transform:translateY(-2px);text-shadow:var(--neon-shadow)}
+  .nav-btn.active{color:var(--accent);border:1px solid rgba(0,255,159,0.06);box-shadow:var(--neon-shadow)}
+  .layout{display:grid;grid-template-columns:1fr 320px;gap:16px}
+  main{background:linear-gradient(180deg, rgba(0,0,0,0.14), rgba(255,255,255,0.01));padding:14px;border-radius:10px;border:1px solid rgba(255,255,255,0.02);min-height:56vh}
+  aside{background: linear-gradient(180deg, rgba(255,255,255,0.01), transparent);padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.02);height:fit-content}
+  section{display:none}
+  section.active{display:block}
+  h2.title{font-family:"Orbitron";color:var(--accent);text-shadow:var(--neon-shadow);margin:8px 0 12px 0}
+  .terminal{background:linear-gradient(180deg, rgba(1,1,1,0.6), rgba(255,255,255,0.02));padding:12px;border-radius:8px;color:#b7ffdf;font-family:inherit;font-size:14px;box-shadow:var(--neon-shadow);border:1px solid rgba(0,255,159,0.06);overflow:auto}
+  .prompt{color:var(--accent2);font-weight:600}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+  .card{background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.02);cursor:pointer;transition:transform .12s}
+  .card:hover{transform:translateY(-6px);box-shadow:var(--neon-shadow-2)}
+  .small{font-size:13px;color:var(--muted)}
+  .shop-item{display:flex;gap:10px;align-items:center;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.02);margin-bottom:8px}
+  .shop-item .img{width:68px;height:56px;border-radius:6px;background:linear-gradient(135deg,var(--panel), rgba(124,77,255,0.06));display:grid;place-items:center;color:var(--accent);font-family:"Orbitron"}
+  .add-btn{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#021;border:none;padding:8px 10px;border-radius:8px;cursor:pointer;box-shadow:var(--neon-shadow)}
+  label{display:block;margin-bottom:6px;color:var(--muted);font-size:13px}
+  input,textarea{width:100%;padding:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.03);color:#dfffee}
+  .overlay{position:fixed;inset:0;display:none;place-items:center;background:rgba(0,0,0,0.7);z-index:40}
+  .overlay.show{display:grid}
+  .modal{width:min(920px,94%);background:#071017;padding:16px;border-radius:10px;border:1px solid rgba(0,255,159,0.06);box-shadow:0 30px 90px rgba(0,0,0,0.7)}
+  footer{text-align:center;color:var(--muted);margin-top:14px;font-size:13px}
+  .glow{position:fixed;width:14px;height:14px;border-radius:50%;pointer-events:none;z-index:30;mix-blend-mode:screen;transform:translate(-50%,-50%);background:radial-gradient(circle,#fff 0%, rgba(0,255,159,0.55) 18%, transparent 50%);box-shadow:var(--neon-shadow)}
+  /* mobile styles */
+  @media (max-width:900px){
+    .layout{grid-template-columns:1fr;gap:12px}
+    aside{order:2}
+    .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+    .shop-item{flex-direction:column;align-items:flex-start}
+    .shop-item .img{width:100%;height:110px;margin-bottom:8px}
+    .terminal{font-size:13px;padding:10px}
+    nav{gap:6px}
+  }
+
+/* Fonts-only override (no layout/animation changes) */
+code, pre { font-family: "Fira Code", monospace; }
+/* End fonts-only override */
+
+</style>
+
+<!-- injected: minimal styles for About + Link button -->
+<style id="about-link-css">
+.h4x-section{margin:12px 0 10px 0}
+.h4x-card{background:linear-gradient(180deg, rgba(1,1,1,0.6), rgba(255,255,255,0.02));
+  padding:12px;border-radius:8px;border:1px solid rgba(0,255,159,0.06);box-shadow:var(--neon-shadow)}
+.h4x-title{font-family:"Orbitron";margin:0 0 6px 0;color:var(--accent)}
+.h4x-note{font-size:13px;color:var(--muted);line-height:1.6}
+.h4x-btn{display:inline-block;margin-top:10px;padding:10px 12px;border-radius:10px;
+  border:1px solid rgba(255,255,255,0.06);
+  background:linear-gradient(90deg,var(--accent),var(--accent2));color:#021;
+  text-decoration:none;font-weight:800;box-shadow:var(--neon-shadow)}
+.h4x-btn:focus{outline:2px solid rgba(0,255,159,0.4);outline-offset:2px}
+</style>
+
+<style id="about-typer-css">
+.h4x-typer{position:relative;display:inline-block;white-space:pre-wrap}
+.h4x-cursor{display:inline-block;width:1ch;animation:h4x-blink 1s steps(1) infinite;vertical-align:baseline}
+@keyframes h4x-blink{50%{opacity:0}}
+</style>
+
+<style id="about-soft-btn">
+.h4x-btn.soft{
+  background:linear-gradient(180deg, rgba(255,255,255,0.06), rgba(0,0,0,0.15));
+  color:var(--accent);
+  border-color:rgba(0,255,159,0.12);
+  box-shadow:none;
+}
+.h4x-btn.soft:hover{transform:translateY(-1px);}
+</style>
+
+<style id="h4x-nav-upgrade">
+/* Primary nav upgrades (non-destructive) */
+header nav[aria-label="Primary"]{
+  display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+  position:sticky; top:14px; z-index:50;
+  background:linear-gradient(180deg, rgba(0,0,0,0.2), rgba(0,0,0,0));
+  padding:6px 8px; border-radius:14px;
+  backdrop-filter: blur(4px);
+}
+header .nav-btn{
+  appearance:none; border:1px solid rgba(0,255,159,0.14);
+  background:linear-gradient(180deg, rgba(255,255,255,0.06), rgba(0,0,0,0.2));
+  color:var(--text, #cfeee4); font-weight:700; letter-spacing:.2px;
+  padding:10px 14px; border-radius:999px; cursor:pointer;
+  transition:transform .12s ease, box-shadow .12s ease, background .12s ease, color .12s ease;
+  box-shadow: 0 0 0 0 rgba(0,255,159,0);
+}
+header .nav-btn:hover{ transform: translateY(-1px); box-shadow: 0 0 18px 2px rgba(0,255,159,0.15); }
+header .nav-btn:focus{ outline:2px solid rgba(0,255,159,0.35); outline-offset:2px }
+header .nav-btn.active{
+  background:linear-gradient(90deg, var(--accent), var(--accent2));
+  color:#021; box-shadow: 0 0 24px 3px rgba(0,255,159,0.28);
+  border-color:transparent;
+}
+/* Compact on very small screens */
+@media (max-width: 520px){
+  header nav[aria-label="Primary"]{ position:static; padding:4px 6px; gap:8px }
+  header .nav-btn{ padding:8px 12px; font-size:14px }
+}
+</style>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <!-- matrix canvas holder -->
+  <div class="matrix" id="matrix"></div>
+  <div class="glow" id="glow"></div>
+
+  <div class="container" role="main">
+    <header>
+      <div class="logo" aria-hidden>
+        <div class="symbol">EQ</div>
+        <div>
+          <h1>root@h4fiz</h1>
+          <p>h4fiz — The Digital Creator From The Future | Tech Enthusiast | Philosopher</p>
+        </div>
+      </div>
+
+      <nav aria-label="Primary">
+        <button class="nav-btn active" data-view="home">Home</button>
+        <button class="nav-btn" data-view="portfolio">Portfolio</button>
+        <button class="nav-btn" data-view="shop">Shop(EQNov)</button>
+        <button class="nav-btn" data-view="blog">Blog</button>
+        <button class="nav-btn" data-view="contact">Contact</button>
+      </nav>
+    </header>
+
+    <div class="layout">
+      <main>
+        <!-- HOME -->
+        <section id="home" class="active">
+          <h2 class="title">WELCOME</h2>
+          <div class="terminal" id="homeTerminal" aria-live="polite">
+            <div><span class="prompt">&gt;_</span> boot sequence initiated...</div>
+            <div><span class="prompt">&gt;_</span> loading modules: [design] [dev] [creative]</div>
+            <div id="homeType" style="margin-top:8px;color:var(--muted)"></div>
+          </div>
+
+          
+<!-- injected: About Me block (keeps original animations; no JS changes) -->
+<div class="h4x-section">
+  <div class="h4x-card" role="region" aria-label="About Me">
+    <h3 class="h4x-title">ABOUT ME</h3>
+    <p class="h4x-note h4x-typer" data-text="root@h4fiz ~ % Hi, I’m Hafiz from Kuala Lumpur, Malaysia — I'm a passionate digital marketer, tech enthusiast, and creative builder who loves blending strategy, design, and innovation to create meaningful digital experiences. I believe technology isn’t just about code or algorithms. It’s about connecting people, ideas, and possibilities.
+
+    My journey began with a deep curiosity for how brands grow online. Over time, I developed a strong foundation in social media marketing, SEO, and digital campaign strategy, learning how to turn data into stories and engagement into real results. I’ve also gained hands-on experience with media planning, analytics, and performance measurement, ensuring every campaign I run has purpose, precision, and measurable impact.
+    
+    Beyond marketing, I’m passionate about technology and programming. from building websites in Wordpress, Laravel, Flutter, and Python, to experimenting with APIs and automation. I enjoy exploring how digital tools can simplify processes, enhance creativity, and empower small businesses to stand out in a competitive world.
+    
+    I’m also the founder of EQNov, a brand built to help creators and businesses enhance their online presence through smart engagement solutions. My mission is simple: to make digital growth accessible, efficient, and exciting for everyone.
+    
+    When I’m not building or planning, you’ll probably find me discovering new music, tweaking app ideas, or diving into sci-fi theories that spark imagination and innovation. "></p>
+  </div>
+</div>
+<div style="height:12px"></div>
+
+          <h2 class="title">QUICK LINKS</h2>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="nav-btn" data-view="portfolio">View Work</button>
+            <button class="nav-btn" data-view="blog">Read Blog</button>
+            <button class="nav-btn" data-view="contact">Get in Touch</button>
+            <button class="nav-btn" data-view="shop">Open Shop</button>
+          </div>
+        </section>
+
+        <!-- PORTFOLIO -->
+        <section id="portfolio">
+          <h2 class="title">PORTFOLIO</h2>
+          <div class="grid" id="portfolioGrid" aria-live="polite"></div>
+        </section>
+
+        <!-- SHOP -->
+        <section id="shop">
+          <h2 class="title">SHOP (EQNov)</h2>
+          <div id="shopList"></div>
+          <div style="margin-top:10px;">
+            <h3 class="small">Cart</h3>
+            <div id="cart" style="min-height:48px;padding:8px;border-radius:8px;background:var(--glass);border:1px solid rgba(255,255,255,0.02)"></div>
+            <div style="margin-top:8px"><button class="primary" id="checkoutBtn">Checkout</button></div>
+          </div>
+        </section>
+
+        <!-- BLOG -->
+        <section id="blog">
+          <h2 class="title">BLOG</h2>
+          <div id="posts"></div>
+        </section>
+
+        <!-- CONTACT -->
+        <section id="contact">
+          <h2 class="title">CONTACT</h2>
+          <form id="contactForm" style="display:grid;gap:10px;max-width:560px" onsubmit="return false;">
+            <label for="cname">Name</label><input id="cname" type="text" required placeholder="Alias">
+            <label for="cemail">Email</label><input id="cemail" type="email" required placeholder="hack@eqnov.com">
+            <label for="cmsg">Message</label><textarea id="cmsg" rows="5"></textarea>
+            <div style="display:flex;gap:8px;">
+              <button class="primary" id="sendBtn">Send</button>
+              <button class="nav-btn" type="reset">Reset</button>
+            </div>
+            <div id="contactStatus" class="small" style="margin-top:6px"></div>
+          </form>
+        </section>
+      </main>
+
+      <aside aria-hidden>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div class="small">Handle</div>
+            <div style="font-weight:700;color:var(--accent)">@root_h4fiz</div>
+          </div>
+          <div style="text-align:right">
+            <div class="small">Status</div>
+            <div style="font-weight:700;color:#aaffce">online</div>
+          </div>
+        </div>
+<!-- standalone: Linktree button placed outside About Me card -->
+<div class="h4x-section" aria-label="Linktree Button">
+  <a class="h4x-btn soft" href="https://linktr.ee/your-handle" target="_blank" rel="noopener">Linktree</a>
+</div>
+
+
+        <hr style="border:none;height:1px;background:rgba(255,255,255,0.02);margin:12px 0" />
+
+        <div>
+          <h3 class="small" style="margin:0 0 8px 0;color:var(--muted)">Skills</h3>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <span class="card small">Fullstack - Digital Marketing</span>
+            <span class="card small">Fullstack - Web Development</span>
+            <span class="card small">Artificial Intelligence</span>
+            <span class="card small">SEO</span>
+            <span class="card small">Business & Branding</span>
+            <span class="card small">Technology</span>
+            <span class="card small">Creative</span>
+            <span class="card small">Entrepreneurship</span>
+          </div>
+        </div>
+
+        <div style="height:12px"></div>
+
+        <div>
+          <h3 class="small" style="margin:0 0 8px 0;color:var(--muted)">Mini Console</h3>
+          <div class="terminal" id="miniConsole" style="max-height:240px;overflow:auto"></div>
+        </div>
+      </aside>
+    </div>
+
+    <footer>made with ❤︎ • © <span id="year"></span> — root@h4fiz</footer>
+  </div>
+
+  <!-- Modal / Admin -->
+  <div class="overlay" id="overlay" aria-hidden>
+    <div class="modal" role="dialog">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div>
+          <h3 id="modalTitle" style="margin:0;color:var(--accent)">Modal</h3>
+          <div id="modalTag" class="small"></div>
+        </div>
+        <div><button class="nav-btn" onclick="closeModal()">Close ✕</button></div>
+      </div>
+      <div id="modalContent" style="color:#dfffee"></div>
+    </div>
+  </div>
+
+<script>
+/* ----------------------------
+   Helper + State
+   ---------------------------- */
+const state = {
+  portfolio: [
+    {title:"EQNov Dashboard", meta:"Web App", desc:"Admin dashboard & order management."},
+    {title:"Neon Terminal UI", meta:"UI/UX", desc:"Terminal-inspired UI kit."}
+  ],
+  blog: [
+    {title:"Launching EQNov", desc:"Short intro to the project."}
+  ],
+  products: [
+    {id:1,name:"Bot Package A",price:"RM10",link:"https://example.com/order1"},
+    {id:2,name:"Bot Package B",price:"RM20",link:"https://example.com/order2"}
+  ],
+  cart: []
+};
+
+/* ----------------------------
+   SPA Navigation
+   ---------------------------- */
+const navButtons = Array.from(document.querySelectorAll('.nav-btn'));
+const sections = Array.from(document.querySelectorAll('main section'));
+navButtons.forEach(btn=>{
+  btn.addEventListener('click', (e)=>{
+    const view = btn.dataset.view;
+    if(view) showView(view);
+  });
+});
+function showView(view){
+  navButtons.forEach(b=>b.classList.toggle('active', b.dataset.view===view));
+  sections.forEach(s=>s.classList.toggle('active', s.id===view));
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function scrollToShop(){ showView('shop'); }
+
+/* ----------------------------
+   Home terminal / typewriter
+   ---------------------------- */
+const homeType = document.getElementById('homeType');
+const homeLines = [
+  "full-stack digital marketing • web development",
+  "problem solver • visual hacker",
+  "crafting immersive experiences with code & pixels.",
+  "currently: building a good life."
+];
+let hl=0,ch=0;
+(function typeWriter(){
+  const line = homeLines[hl];
+  homeType.textContent = line.slice(0,ch) + (ch%2 ? "|" : "");
+  ch++;
+  if(ch > line.length + 6){
+    hl = (hl+1) % homeLines.length;
+    ch = 0;
+    setTimeout(typeWriter, 700);
+  } else {
+    setTimeout(typeWriter, 50 + Math.random()*60);
+  }
+})();
+
+/* ----------------------------
+   Mini Console (hacker widgets)
+   ---------------------------- */
+const miniConsole = document.getElementById('miniConsole');
+let uptimeStart = Date.now();
+const logPool = [
+  "System: Running(OK)",
+];
+function fmtUptime(sec){
+  const h = Math.floor(sec/3600); const m = Math.floor((sec%3600)/60); const s = sec%60;
+  return `${h}h ${m}m ${s}s`;
+}
+function updateMini(){
+  const now = Date.now();
+  const sec = Math.floor((now - uptimeStart)/1000);
+  const cpu = Math.floor(Math.random()*45 + 5); // 5-50%
+  const mem = Math.floor(Math.random()*60 + 10); // 10-70%
+  const net = Math.floor(Math.random()*900 + 100); // pkts/s
+  const ip = `192.168.${Math.floor(Math.random()*200)}.${Math.floor(Math.random()*250)}`;
+  // header lines
+  let html = `<div><span class="prompt">&gt;_</span> system: secured</div>`;
+  html += `<div><span class="prompt">&gt;_</span> uptime: ${fmtUptime(sec)}</div>`;
+  html += `<div><span class="prompt">&gt;_</span> ip: ${ip}</div>`;
+  html += `<div><span class="prompt">&gt;_</span> cpu: ${cpu}% | mem: ${mem}% | net: ${net} pkt/s</div>`;
+  // logs (append last few)
+  html += '<div style="margin-top:8px;color:var(--muted)">';
+  // keep a persistent log array on the element
+  miniConsole._logs = miniConsole._logs || [];
+  if(Math.random() < 0.6){
+    miniConsole._logs.push(`>_ ${logPool[Math.floor(Math.random()*logPool.length)]} (${new Date().toLocaleTimeString()})`);
+    if(miniConsole._logs.length > 12) miniConsole._logs.shift();
+  }
+  miniConsole._logs.forEach(l => html += `<div>${l}</div>`);
+  html += '</div>';
+  miniConsole.innerHTML = html;
+  // keep scroll to bottom
+  miniConsole.scrollTop = miniConsole.scrollHeight;
+}
+setInterval(updateMini, 1500);
+updateMini();
+
+/* ----------------------------
+   Portfolio / Blog / Shop renderers
+   ---------------------------- */
+const portfolioGrid = document.getElementById('portfolioGrid');
+function renderPortfolio(){
+  portfolioGrid.innerHTML = '';
+  state.portfolio.forEach((p,idx)=>{
+    const el = document.createElement('div'); el.className='card';
+    el.innerHTML = `<div style="font-weight:700">${escapeHtml(p.title)}</div><div class="small" style="margin-top:6px">${escapeHtml(p.meta)}</div>`;
+    el.addEventListener('click', ()=> openModal(p.title, p.meta, p.desc || '—'));
+    portfolioGrid.appendChild(el);
+  });
+}
+renderPortfolio();
+
+const postsEl = document.getElementById('posts');
+function renderBlog(){
+  postsEl.innerHTML = '';
+  state.blog.forEach((b,idx)=>{
+    const el = document.createElement('div'); el.className='card';
+    el.style.padding = '10px';
+    el.innerHTML = `<div style="font-weight:700">${escapeHtml(b.title)}</div><div class="small" style="margin-top:6px">${escapeHtml(b.desc || '')}</div>`;
+    postsEl.appendChild(el);
+  });
+}
+renderBlog();
+
+const shopList = document.getElementById('shopList');
+const cartEl = document.getElementById('cart');
+function renderShop(){
+  shopList.innerHTML = '';
+  state.products.forEach(prod=>{
+    const div = document.createElement('div'); div.className = 'shop-item';
+    div.innerHTML = `<div class="img">${prod.id}</div>
+                     <div class="meta"><div style="font-weight:700">${escapeHtml(prod.name)}</div><div class="small">${escapeHtml(prod.price)}</div></div>
+                     <div><button class="add-btn">Add to Cart</button></div>`;
+    div.querySelector('button').addEventListener('click', ()=> {
+      state.cart.push(prod);
+      renderCart();
+      toast('Added to cart');
+    });
+    shopList.appendChild(div);
+  });
+}
+renderShop();
+
+function renderCart(){
+  if(!cartEl) return;
+  if(state.cart.length === 0){
+    cartEl.innerHTML = `<div class="small" style="color:var(--muted)">Cart is empty</div>`;
+    return;
+  }
+  let totalText = '';
+  state.cart.forEach((it, i)=>{
+    const line = document.createElement('div');
+    line.style.display='flex'; line.style.justifyContent='space-between'; line.style.alignItems='center'; line.style.marginBottom='6px';
+    line.innerHTML = `<div>${escapeHtml(it.name)}</div><div class="small">${escapeHtml(it.price)} <button class="nav-btn" data-i="${i}">✕</button></div>`;
+    line.querySelector('button').addEventListener('click', ()=>{ state.cart.splice(i,1); renderCart(); });
+    cartEl.appendChild(line);
+  });
+  const checkoutWrap = document.createElement('div');
+  checkoutWrap.style.marginTop='8px';
+  checkoutWrap.innerHTML = `<div style="display:flex;justify-content:space-between;font-weight:700"><div>Items</div><div>${state.cart.length}</div></div>`;
+  cartEl.appendChild(checkoutWrap);
+}
+renderCart();
+
+/* Checkout behavior: as requested, opens external link(s) in new tabs.
+   We'll open one tab per cart item to that product's external link.
+*/
+document.getElementById('checkoutBtn').addEventListener('click', ()=>{
+  if(state.cart.length === 0){ toast('Cart empty'); return; }
+  // Open each product link in new tab
+  state.cart.forEach(p => {
+    try { window.open(p.link, '_blank'); } catch(e){ /* ignore */ }
+  });
+  // Clear cart
+  state.cart = [];
+  renderCart();
+  toast('Checkout opened in new tab(s)');
+});
+
+/* ----------------------------
+   Modal functions
+   ---------------------------- */
+const overlay = document.getElementById('overlay');
+function openModal(title, tag, content){
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalTag').textContent = tag;
+  document.getElementById('modalContent').textContent = content;
+  overlay.classList.add('show');
+}
+function closeModal(){
+  overlay.classList.remove('show');
+}
+
+/* ----------------------------
+   Contact form (mock)
+   ---------------------------- */
+document.getElementById('sendBtn').addEventListener('click', ()=>{
+  const name = document.getElementById('cname').value.trim();
+  const email = document.getElementById('cemail').value.trim();
+  if(!name || !email){ document.getElementById('contactStatus').textContent = 'Please enter name and email.'; return; }
+  document.getElementById('contactStatus').textContent = 'Sending...';
+  setTimeout(()=>{ document.getElementById('contactStatus').textContent = 'Message sent (mock).'; document.getElementById('contactForm').reset(); }, 900);
+});
+
+/* ----------------------------
+   Simple toast
+   ---------------------------- */
+function toast(msg){
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.position='fixed'; t.style.left='50%'; t.style.bottom='22px'; t.style.transform='translateX(-50%)';
+  t.style.padding='10px 14px'; t.style.borderRadius='10px'; t.style.background='linear-gradient(90deg,var(--accent),var(--accent2))';
+  t.style.color='#021'; t.style.boxShadow='var(--neon-shadow)'; t.style.zIndex=60;
+  document.body.appendChild(t);
+  setTimeout(()=> t.style.opacity='0', 1200);
+  setTimeout(()=> t.remove(), 1800);
+}
+
+/* ----------------------------
+   Admin Panel: Ctrl+Shift+A opens admin prompt and admin UI
+   Admin key (prompt): root@h4fiz/admin
+   ---------------------------- */
+const ADMIN_KEY = 'root@h4fiz/admin';
+let adminUnlocked = false;
+document.addEventListener('keydown', (e)=>{
+  if(e.ctrlKey && e.shiftKey && e.code === "KeyA"){
+    const key = prompt('Enter admin key:');
+    if(key === ADMIN_KEY){
+      adminUnlocked = true;
+      openAdminUI();
+    } else {
+      alert('Access denied');
+    }
+  }
+});
+
+function openAdminUI(){
+  // small admin panel overlay
+  const panel = document.createElement('div');
+  panel.style.position='fixed'; panel.style.inset='0'; panel.style.zIndex=70; panel.style.background='rgba(0,0,0,0.95)';
+  panel.style.color='#aaffcc'; panel.style.padding='18px'; panel.style.overflow='auto';
+  panel.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h2 style="margin:0">Admin Panel</h2>
+      <div><button class="nav-btn" id="closeAdmin">Close</button></div>
+    </div>
+
+    <section style="margin-bottom:14px">
+      <h3 style="margin:6px 0">Add Portfolio Item</h3>
+      <label>Title</label><input id="adm_pf_title">
+      <label>Meta</label><input id="adm_pf_meta">
+      <label>Description</label><textarea id="adm_pf_desc"></textarea>
+      <div style="margin-top:8px"><button class="primary" id="adm_add_pf">Add Portfolio</button></div>
+    </section>
+
+    <section style="margin-bottom:14px">
+      <h3 style="margin:6px 0">Add Blog Post</h3>
+      <label>Title</label><input id="adm_bl_title">
+      <label>Content</label><textarea id="adm_bl_desc"></textarea>
+      <div style="margin-top:8px"><button class="primary" id="adm_add_bl">Add Blog</button></div>
+    </section>
+
+    <section style="margin-bottom:14px">
+      <h3 style="margin:6px 0">Add Shop Product</h3>
+      <label>Name</label><input id="adm_pr_name">
+      <label>Price</label><input id="adm_pr_price">
+      <label>External Link</label><input id="adm_pr_link" placeholder="https://...">
+      <div style="margin-top:8px"><button class="primary" id="adm_add_pr">Add Product</button></div>
+    </section>
+
+    <section style="margin-top:24px">
+      <h3 style="margin:6px 0">Current Data</h3>
+      <div style="max-height:180px;overflow:auto;border:1px solid rgba(255,255,255,0.03);padding:8px;border-radius:6px;background:rgba(255,255,255,0.01)">
+        <pre id="adm_dump" style="white-space:pre-wrap;font-size:13px"></pre>
+      </div>
+    </section>
+  `;
+  document.body.appendChild(panel);
+  document.getElementById('closeAdmin').addEventListener('click', ()=>panel.remove());
+  document.getElementById('adm_add_pf').addEventListener('click', ()=>{
+    const t = document.getElementById('adm_pf_title').value.trim();
+    const m = document.getElementById('adm_pf_meta').value.trim();
+    const d = document.getElementById('adm_pf_desc').value.trim();
+    if(!t) return alert('Title required');
+    state.portfolio.push({title:t,meta:m,desc:d});
+    renderPortfolio(); updateAdminDump();
+  });
+  document.getElementById('adm_add_bl').addEventListener('click', ()=>{
+    const t = document.getElementById('adm_bl_title').value.trim();
+    const d = document.getElementById('adm_bl_desc').value.trim();
+    if(!t) return alert('Title required');
+    state.blog.push({title:t,desc:d});
+    renderBlog(); updateAdminDump();
+  });
+  document.getElementById('adm_add_pr').addEventListener('click', ()=>{
+    const n = document.getElementById('adm_pr_name').value.trim();
+    const p = document.getElementById('adm_pr_price').value.trim();
+    const l = document.getElementById('adm_pr_link').value.trim();
+    if(!n || !l) return alert('Name and link required');
+    const id = (state.products.length? state.products[state.products.length-1].id+1 : 1);
+    state.products.push({id, name:n, price:p||'—', link:l});
+    renderShop(); updateAdminDump();
+  });
+  function updateAdminDump(){
+    document.getElementById('adm_dump').textContent = JSON.stringify(state, null, 2);
+  }
+  updateAdminDump();
+}
+
+/* ----------------------------
+   Utilities
+   ---------------------------- */
+function escapeHtml(s){ if(!s) return ''; return s.replace(/[&<>"']/g, (m)=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+
+/* ----------------------------
+   Matrix rain (canvas) — responsive
+   ---------------------------- */
+(function matrixRain(){
+  const wrap = document.getElementById('matrix');
+  const canvas = document.createElement('canvas'); canvas.style.width='100%'; canvas.style.height='100%'; canvas.style.display='block';
+  wrap.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+  let w = canvas.width = window.innerWidth;
+  let h = canvas.height = window.innerHeight;
+  const fontSize = 14;
+  let cols = Math.floor(w / fontSize);
+  let drops = new Array(cols).fill(1);
+  function resize(){
+    w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight;
+    cols = Math.floor(w / fontSize); drops = new Array(cols).fill(1);
+  }
+  window.addEventListener('resize', resize);
+  function draw(){
+    ctx.fillStyle = "rgba(0,0,0,0.06)";
+    ctx.fillRect(0,0,w,h);
+    ctx.font = fontSize + "px monospace";
+    for(let i=0;i<cols;i++){
+      const text = String.fromCharCode(33 + Math.random()*94);
+      // alternate color between accent and accent2
+      ctx.fillStyle = (i%6 === 0) ? "#7C4DFF" : "#00FF9F";
+      ctx.fillText(text, i*fontSize, drops[i]*fontSize);
+      if(drops[i]*fontSize > h && Math.random() > 0.975) drops[i] = 0;
+      drops[i]++;
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ----------------------------
+   Initialize render + footer year
+   ---------------------------- */
+document.getElementById('year').textContent = new Date().getFullYear();
+renderPortfolio();
+renderBlog();
+renderShop();
+
+/* ----------------------------
+   Cursor glow
+   ---------------------------- */
+const glow = document.getElementById('glow');
+document.addEventListener('mousemove', (e)=>{
+  glow.style.left = e.clientX + 'px';
+  glow.style.top = e.clientY + 'px';
+});
+
+/* ----------------------------
+   Small accessibility: close overlay click
+   ---------------------------- */
+document.getElementById('overlay').addEventListener('click', (ev)=>{
+  if(ev.target === document.getElementById('overlay')) closeModal();
+});
+</script>
+
+<script id="about-typer-js">
+(function(){
+  const el = document.querySelector('.h4x-typer');
+  if(!el) return;
+  const full = el.getAttribute('data-text') || el.textContent;
+  el.textContent = '';
+  const cursor = document.createElement('span');
+  cursor.className = 'h4x-cursor';
+  cursor.textContent = '|';
+  el.after(cursor);
+
+  let i = 0;
+  const speed = 20; // ~ "2" speed from your note: moderately fast
+  function tick(){
+    if(i <= full.length){
+      el.textContent = full.slice(0, i);
+      i++;
+      requestAnimationFrame(tick);
+    }else{
+      // leave cursor blinking at end
+    }
+  }
+  // slight delay so it starts after existing boot lines
+  setTimeout(()=>requestAnimationFrame(tick), 400);
+})();
+</script>
+
+<script id="h4x-nav-upgrade-js">
+(function(){
+  // 1) Visually rename "Shop(EQNov)" -> "Shop" without touching original HTML
+  const shopBtn = document.querySelector('nav[aria-label="Primary"] .nav-btn[data-view="shop"]');
+  if (shopBtn && /Shop\(EQNov\)/i.test(shopBtn.textContent)) {
+    shopBtn.setAttribute('data-original-label', shopBtn.textContent.trim());
+    shopBtn.textContent = 'Shop';
+  }
+
+  // 2) Ensure .active styling stays in sync with existing logic
+  const btns = document.querySelectorAll('nav[aria-label="Primary"] .nav-btn');
+  btns.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      btns.forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+    }, {capture:true});
+  });
+})();
+</script>
+  <script src="assets/script.js"></script>
+  <script src="assets/cms.js"></script>
+</body>
+</html>
